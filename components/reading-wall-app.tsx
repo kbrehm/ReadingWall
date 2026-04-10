@@ -57,7 +57,6 @@ export function ReadingWallApp() {
   const [composerFeedback, setComposerFeedback] = useState("");
   const [postingBook, setPostingBook] = useState(false);
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
-  const [openThreads, setOpenThreads] = useState<Record<string, boolean>>({});
   const [postingCommentId, setPostingCommentId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -302,7 +301,6 @@ export function ReadingWallApp() {
     }
 
     setCommentDrafts((current) => ({ ...current, [bookId]: "" }));
-    setOpenThreads((current) => ({ ...current, [bookId]: false }));
     await loadBooks();
   }
 
@@ -432,47 +430,6 @@ export function ReadingWallApp() {
       <section className="room-screen">
         <div className="room-layout room-layout-simplified">
           <div className="room-main">
-            <section className="surface-card room-toolbar">
-              <div className="room-toolbar-top">
-                <div className="room-mini-title">
-                  <span className="eyebrow">{gradeLabel(session.grade)}</span>
-                  <span className="toolbar-copy">
-                    {visibleBooks.length} book{visibleBooks.length === 1 ? "" : "s"}
-                  </span>
-                </div>
-                <button
-                  className="ghost-button"
-                  onClick={resetEntry}
-                  type="button"
-                >
-                  Change Username
-                </button>
-              </div>
-              <div className="book-actions">
-                <button
-                  className={`sort-button ${sortMode === "newest" ? "is-active" : ""}`}
-                  onClick={() => setSortMode("newest")}
-                  type="button"
-                >
-                  Newest
-                </button>
-                <button
-                  className={`sort-button ${sortMode === "highest" ? "is-active" : ""}`}
-                  onClick={() => setSortMode("highest")}
-                  type="button"
-                >
-                  Highest Rated
-                </button>
-                <button
-                  className={`toggle-button ${onlyRecommended ? "is-active" : ""}`}
-                  onClick={() => setOnlyRecommended((current) => !current)}
-                  type="button"
-                >
-                  Recommended Only
-                </button>
-              </div>
-            </section>
-
             {booksError ? (
               <section className="surface-card">
                 <p className="error-text">Supabase error: {booksError}</p>
@@ -540,103 +497,63 @@ export function ReadingWallApp() {
                       </div>
 
                       <div className="comments-shell inline-comments-shell">
-                    <div className="section-title">
-                      <h3>Discussion</h3>
-                      <span className="muted">
-                        {book.comments.length} comment{book.comments.length === 1 ? "" : "s"}
-                      </span>
-                    </div>
+                        <div className="section-title">
+                          <h3>Discussion</h3>
+                          <span className="muted">
+                            {book.comments.length} comment
+                            {book.comments.length === 1 ? "" : "s"}
+                          </span>
+                        </div>
 
-                    <div className="comment-list">
-                      {book.comments.length ? (
-                        book.comments.map((comment) => (
-                          <article className="comment-item" key={comment.id}>
-                            <div className="comment-head">
-                              <strong>{comment.username}</strong>
-                              <span className="muted">
-                                {formatTimestamp(comment.created_at)}
-                              </span>
+                        <div className="comment-list chat-list">
+                          {book.comments.length ? (
+                            book.comments.map((comment) => (
+                              <article className="comment-item chat-item" key={comment.id}>
+                                <div className="comment-head">
+                                  <strong>{comment.username}</strong>
+                                  <span className="muted">
+                                    {formatTimestamp(comment.created_at)}
+                                  </span>
+                                </div>
+                                <p>{comment.message}</p>
+                              </article>
+                            ))
+                          ) : (
+                            <div className="comment-item chat-item chat-empty">
+                              <p className="muted">
+                                No comments yet. Be the first to share a thought.
+                              </p>
                             </div>
-                            <p>{comment.message}</p>
-                          </article>
-                        ))
-                      ) : (
-                        <div className="comment-item">
-                          <p className="muted">
-                            No comments yet. Be the first to share a thought.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                        <div className="book-actions compact-actions">
-                          <button
-                            className="secondary-button"
-                            onClick={() =>
-                              setOpenThreads((current) => ({
-                                ...current,
-                                [book.id]: true
-                              }))
-                            }
-                            type="button"
-                          >
-                            Join Discussion
-                          </button>
-                          <button
-                            className="ghost-button"
-                            onClick={() =>
-                              setOpenThreads((current) => ({
-                                ...current,
-                                [book.id]: true
-                              }))
-                            }
-                            type="button"
-                          >
-                            Add Update
-                          </button>
+                          )}
                         </div>
 
-                    {openThreads[book.id] ? (
-                      <form
-                        className="comment-form"
-                        onSubmit={(event) => {
-                          event.preventDefault();
-                          void handleCommentSubmit(book.id);
-                        }}
-                      >
-                        <label>
-                          Write about this book...
-                          <textarea
-                            maxLength={220}
-                            placeholder="Write about this book..."
-                            value={commentDrafts[book.id] ?? ""}
-                            onChange={(event) =>
-                              setCommentDrafts((current) => ({
-                                ...current,
-                                [book.id]: event.target.value
-                              }))
-                            }
-                          />
-                        </label>
-                        <div className="comment-actions">
-                          <button className="primary-button" type="submit">
-                            {postingCommentId === book.id ? "Posting..." : "Post Comment"}
-                          </button>
-                          <button
-                            className="ghost-button"
-                            onClick={() =>
-                              setOpenThreads((current) => ({
-                                ...current,
-                                [book.id]: false
-                              }))
-                            }
-                            type="button"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </form>
-                    ) : null}
+                        <form
+                          className="comment-form chat-form"
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            void handleCommentSubmit(book.id);
+                          }}
+                        >
+                          <label className="chat-label">
+                            <span className="sr-only">Write about this book</span>
+                            <textarea
+                              maxLength={220}
+                              placeholder="Write about this book..."
+                              value={commentDrafts[book.id] ?? ""}
+                              onChange={(event) =>
+                                setCommentDrafts((current) => ({
+                                  ...current,
+                                  [book.id]: event.target.value
+                                }))
+                              }
+                            />
+                          </label>
+                          <div className="comment-actions">
+                            <button className="primary-button" type="submit">
+                              {postingCommentId === book.id ? "Posting..." : "Send"}
+                            </button>
+                          </div>
+                        </form>
                       </div>
                     </div>
                   </div>
@@ -682,9 +599,9 @@ export function ReadingWallApp() {
                     />
                   </label>
 
-                  <label>
-                    Rating
-                    <div className="stars-row">
+                    <label>
+                      Rating
+                    <div className="stars-row composer-rating-row">
                       {Array.from({ length: 5 }, (_, index) => {
                         const value = index + 1;
                         return (
@@ -701,6 +618,7 @@ export function ReadingWallApp() {
                         );
                       })}
                     </div>
+                    <span className="field-help">Tap a number from 1 to 5.</span>
                   </label>
                 </div>
 
@@ -815,7 +733,42 @@ export function ReadingWallApp() {
           </div>
 
           <aside className="surface-card grade-rail" aria-label="Grade rooms">
-            <div className="grade-rail-label">Grades</div>
+            <div className="grade-rail-head">
+              <div className="grade-rail-label">Grades</div>
+              <div className="toolbar-copy grade-count">
+                {visibleBooks.length} book{visibleBooks.length === 1 ? "" : "s"}
+              </div>
+              <button
+                className="ghost-button grade-rail-change"
+                onClick={resetEntry}
+                type="button"
+              >
+                Change Username
+              </button>
+            </div>
+            <div className="grade-rail-sort">
+              <button
+                className={`sort-button ${sortMode === "newest" ? "is-active" : ""}`}
+                onClick={() => setSortMode("newest")}
+                type="button"
+              >
+                Newest
+              </button>
+              <button
+                className={`sort-button ${sortMode === "highest" ? "is-active" : ""}`}
+                onClick={() => setSortMode("highest")}
+                type="button"
+              >
+                Highest
+              </button>
+              <button
+                className={`toggle-button ${onlyRecommended ? "is-active" : ""}`}
+                onClick={() => setOnlyRecommended((current) => !current)}
+                type="button"
+              >
+                Recommended
+              </button>
+            </div>
             <div className="grade-rail-tabs" role="tablist">
               {grades.map((grade) => (
                 <button

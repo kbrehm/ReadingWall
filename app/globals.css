@@ -478,6 +478,19 @@ textarea:focus {
   border: 1px solid #eee2cd;
 }
 
+.chat-list {
+  gap: 8px;
+}
+
+.chat-item {
+  border-radius: 18px 18px 18px 8px;
+  background: #fffdf8;
+}
+
+.chat-empty {
+  background: #fffaf0;
+}
+
 .comment-head {
   display: flex;
   justify-content: space-between;
@@ -490,6 +503,20 @@ textarea:focus {
   display: grid;
   gap: 10px;
   margin-top: 14px;
+}
+
+.chat-form {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+.chat-label {
+  gap: 0;
+}
+
+.chat-label textarea {
+  min-height: 54px;
+  border-radius: 18px;
 }
 
 .composer-card {
@@ -530,6 +557,11 @@ textarea:focus {
   color: #6b5208;
 }
 
+.composer-rating-row button {
+  min-width: 42px;
+  min-height: 42px;
+}
+
 .empty-state {
   padding: 28px;
   text-align: center;
@@ -560,6 +592,18 @@ textarea:focus {
   color: #8b3c24;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .room-layout-simplified {
   grid-template-columns: minmax(0, 1fr) 132px;
   align-items: start;
@@ -570,43 +614,48 @@ textarea:focus {
   gap: 16px;
 }
 
-.room-toolbar {
-  padding: 18px 20px;
-}
-
-.room-toolbar-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.room-mini-title {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.room-mini-title .eyebrow {
-  margin-bottom: 0;
-}
-
 .grade-rail {
   position: sticky;
   top: 24px;
   padding: 16px 12px;
 }
 
+.grade-rail-head {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  margin-bottom: 12px;
+}
+
 .grade-rail-label {
-  margin-bottom: 10px;
   color: var(--muted);
   font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   text-align: center;
+}
+
+.grade-count {
+  text-align: center;
+}
+
+.grade-rail-change {
+  padding: 0;
+  font-size: 0.82rem;
+}
+
+.grade-rail-sort {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.grade-rail-sort .sort-button,
+.grade-rail-sort .toggle-button {
+  width: 100%;
+  padding: 10px 8px;
+  font-size: 0.82rem;
 }
 
 .grade-rail-tabs {
@@ -714,6 +763,14 @@ textarea:focus {
     padding: 14px;
   }
 
+  .grade-rail-head {
+    justify-items: start;
+  }
+
+  .grade-rail-sort {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .grade-rail-tabs {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -762,13 +819,12 @@ textarea:focus {
     position: static;
   }
 
-  .room-toolbar-top {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
   .grade-rail-tabs {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .chat-form {
+    grid-template-columns: 1fr;
   }
 
   .compact-book-top {
