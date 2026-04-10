@@ -20,9 +20,14 @@ export type BookPost = {
   author: string | null;
   cover_image_url: string | null;
   posted_by_username: string;
+  reader_badge: string | null;
   rating: number;
   recommendation_status: RecommendationStatus;
   review_text: string;
+  loved_it_count: number;
+  want_to_read_count: number;
+  popular_count: number;
+  funny_count: number;
   created_at: string;
   comments: BookComment[];
 };

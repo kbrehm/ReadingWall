@@ -7,11 +7,16 @@ create table if not exists public.book_posts (
   author text,
   cover_image_url text,
   posted_by_username text not null,
+  reader_badge text,
   rating integer not null check (rating between 1 and 5),
   recommendation_status text not null check (
     recommendation_status in ('Recommended', 'Still Reading', 'Not Recommended')
   ),
   review_text text not null,
+  loved_it_count integer not null default 0,
+  want_to_read_count integer not null default 0,
+  popular_count integer not null default 0,
+  funny_count integer not null default 0,
   created_at timestamptz not null default timezone('utc', now())
 );
 
@@ -26,6 +31,13 @@ create table if not exists public.book_comments (
 alter table public.book_posts enable row level security;
 alter table public.book_comments enable row level security;
 
+alter table public.book_posts
+  add column if not exists reader_badge text,
+  add column if not exists loved_it_count integer not null default 0,
+  add column if not exists want_to_read_count integer not null default 0,
+  add column if not exists popular_count integer not null default 0,
+  add column if not exists funny_count integer not null default 0;
+
 drop policy if exists "anon can read book posts" on public.book_posts;
 create policy "anon can read book posts"
 on public.book_posts
@@ -38,6 +50,14 @@ create policy "anon can insert book posts"
 on public.book_posts
 for insert
 to anon
+with check (true);
+
+drop policy if exists "anon can update book posts" on public.book_posts;
+create policy "anon can update book posts"
+on public.book_posts
+for update
+to anon
+using (true)
 with check (true);
 
 drop policy if exists "anon can read book comments" on public.book_comments;

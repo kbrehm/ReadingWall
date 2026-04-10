@@ -4,13 +4,15 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import {
   fakeUsernameExamples,
   grades,
+  reactionOptions,
+  readingBadges,
   recommendationOptions,
   sessionStorageKeys
 } from "@/lib/constants";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import type { BookPost, EntrySession, GradeId, RecommendationStatus } from "@/lib/types";
 
-type SortMode = "newest" | "highest";
+type SortMode = "newest" | "highest" | "discussed";
 
 type EntryFormState = {
   username: string;
@@ -22,16 +24,24 @@ type BookComposerState = {
   title: string;
   author: string;
   username: string;
+  readerBadge: string;
   rating: number;
   recommendationStatus: RecommendationStatus;
   reviewText: string;
   coverUrl: string;
 };
 
+type ReactionKey =
+  | "loved_it_count"
+  | "want_to_read_count"
+  | "popular_count"
+  | "funny_count";
+
 const emptyComposer = (username: string): BookComposerState => ({
   title: "",
   author: "",
   username,
+  readerBadge: "Great for Summer",
   rating: 4,
   recommendationStatus: "Recommended",
   reviewText: "",
@@ -112,6 +122,10 @@ export function ReadingWallApp() {
     });
 
     return filtered.sort((left, right) => {
+      if (sortMode === "discussed") {
+        return right.comments.length - left.comments.length;
+      }
+
       if (sortMode === "highest") {
         return right.rating - left.rating;
       }
@@ -121,6 +135,49 @@ export function ReadingWallApp() {
       );
     });
   }, [books, onlyRecommended, session, sortMode]);
+
+  const headerStats = useMemo(() => {
+    const readers = new Set(visibleBooks.map((book) => book.posted_by_username)).size;
+    const topRatedBook = [...visibleBooks].sort(
+      (left, right) =>
+        right.rating - left.rating || right.loved_it_count - left.loved_it_count
+    )[0];
+    const newCommentsToday = visibleBooks.reduce((count, book) => {
+      return (
+        count +
+        book.comments.filter((comment) => isToday(comment.created_at)).length
+      );
+    }, 0);
+
+    return {
+      booksPosted: visibleBooks.length,
+      readersThisWeek: readers,
+      topRatedBook: topRatedBook?.title ?? "No books yet",
+      newCommentsToday
+    };
+  }, [visibleBooks]);
+
+  const featuredBooks = useMemo(() => {
+    const topRated = [...visibleBooks].sort(
+      (left, right) =>
+        right.rating - left.rating || right.loved_it_count - left.loved_it_count
+    )[0];
+    const mostDiscussed = [...visibleBooks].sort(
+      (left, right) => right.comments.length - left.comments.length
+    )[0];
+    const mostRecommended = [...visibleBooks]
+      .filter((book) => book.recommendation_status === "Recommended")
+      .sort(
+        (left, right) =>
+          right.loved_it_count - left.loved_it_count || right.rating - left.rating
+      )[0];
+
+    return [
+      { label: "Top Rated", book: topRated },
+      { label: "Most Discussed", book: mostDiscussed },
+      { label: "Most Recommended", book: mostRecommended }
+    ];
+  }, [visibleBooks]);
 
   async function loadBooks() {
     let client;
@@ -141,7 +198,7 @@ export function ReadingWallApp() {
     const { data, error } = await client
       .from("book_posts")
       .select(
-        "id, grade, title, author, cover_image_url, posted_by_username, rating, recommendation_status, review_text, created_at, comments:book_comments(id, book_post_id, username, message, created_at)"
+        "id, grade, title, author, cover_image_url, posted_by_username, reader_badge, rating, recommendation_status, review_text, loved_it_count, want_to_read_count, popular_count, funny_count, created_at, comments:book_comments(id, book_post_id, username, message, created_at)"
       )
       .order("created_at", { ascending: false });
 
@@ -154,6 +211,11 @@ export function ReadingWallApp() {
 
     const normalized = ((data ?? []) as BookPost[]).map((book) => ({
       ...book,
+      reader_badge: book.reader_badge ?? null,
+      loved_it_count: book.loved_it_count ?? 0,
+      want_to_read_count: book.want_to_read_count ?? 0,
+      popular_count: book.popular_count ?? 0,
+      funny_count: book.funny_count ?? 0,
       comments: [...(book.comments ?? [])].sort(
         (left, right) =>
           new Date(left.created_at).getTime() - new Date(right.created_at).getTime()
@@ -230,6 +292,7 @@ export function ReadingWallApp() {
       author: composer.author.trim() || null,
       cover_image_url: composer.coverUrl.trim() || null,
       posted_by_username: composer.username.trim(),
+      reader_badge: composer.readerBadge,
       rating: composer.rating,
       recommendation_status: composer.recommendationStatus,
       review_text: composer.reviewText.trim()
@@ -302,6 +365,26 @@ export function ReadingWallApp() {
 
     setCommentDrafts((current) => ({ ...current, [bookId]: "" }));
     await loadBooks();
+  }
+
+  async function handleReaction(book: BookPost, reactionKey: ReactionKey) {
+    const client = getSupabaseBrowserClient();
+    const nextValue = (book[reactionKey] ?? 0) + 1;
+    const { error } = await client
+      .from("book_posts")
+      .update({ [reactionKey]: nextValue })
+      .eq("id", book.id);
+
+    if (error) {
+      setBooksError(error.message);
+      return;
+    }
+
+    setBooks((current) =>
+      current.map((item) =>
+        item.id === book.id ? { ...item, [reactionKey]: nextValue } : item
+      )
+    );
   }
 
   function changeGrade(nextGrade: GradeId) {
@@ -430,6 +513,85 @@ export function ReadingWallApp() {
       <section className="room-screen">
         <div className="room-layout room-layout-simplified">
           <div className="room-main">
+            <section className="surface-card story-header">
+              <div className="story-header-copy">
+                <div className="eyebrow">Summer Reading Wall</div>
+                <h1>See what kids in your grade are reading.</h1>
+                <p className="muted">
+                  Share books, react to favorites, and discover what your class is
+                  loving this summer.
+                </p>
+              </div>
+              <div className="favorite-badge">
+                <span>This Week&apos;s Favorite</span>
+                <strong>{headerStats.topRatedBook}</strong>
+              </div>
+              <div className="story-stats">
+                <div className="story-stat-card">
+                  <span className="story-stat-label">Books Posted</span>
+                  <strong>{headerStats.booksPosted}</strong>
+                </div>
+                <div className="story-stat-card">
+                  <span className="story-stat-label">Readers This Week</span>
+                  <strong>{headerStats.readersThisWeek}</strong>
+                </div>
+                <div className="story-stat-card">
+                  <span className="story-stat-label">New Comments Today</span>
+                  <strong>{headerStats.newCommentsToday}</strong>
+                </div>
+              </div>
+            </section>
+
+            <section className="surface-card highlights-panel">
+              {featuredBooks.map((item, index) => (
+                <article className="highlight-card" key={item.label}>
+                  <span className="highlight-rank">#{index + 1}</span>
+                  <div>
+                    <p className="highlight-label">{item.label}</p>
+                    <h3>{item.book?.title ?? "Waiting for a favorite"}</h3>
+                    <p className="muted">
+                      {item.book
+                        ? `${item.book.posted_by_username} · ${item.book.comments.length} comments`
+                        : "Post a few books to fill this spot."}
+                    </p>
+                  </div>
+                </article>
+              ))}
+            </section>
+
+            <section className="surface-card feed-controls">
+              <div className="book-actions">
+                <button
+                  className={`sort-button ${sortMode === "newest" ? "is-active" : ""}`}
+                  onClick={() => setSortMode("newest")}
+                  type="button"
+                >
+                  Newest
+                </button>
+                <button
+                  className={`sort-button ${sortMode === "highest" ? "is-active" : ""}`}
+                  onClick={() => setSortMode("highest")}
+                  type="button"
+                >
+                  Highest Rated
+                </button>
+                <button
+                  className={`sort-button ${sortMode === "discussed" ? "is-active" : ""}`}
+                  onClick={() => setSortMode("discussed")}
+                  type="button"
+                >
+                  Most Discussed
+                </button>
+                <button
+                  className={`toggle-button ${onlyRecommended ? "is-active" : ""}`}
+                  onClick={() => setOnlyRecommended((current) => !current)}
+                  type="button"
+                >
+                  Recommended Only
+                </button>
+              </div>
+            </section>
+
             {booksError ? (
               <section className="surface-card">
                 <p className="error-text">Supabase error: {booksError}</p>
@@ -479,6 +641,9 @@ export function ReadingWallApp() {
                         <span className="posted-by">
                           {book.posted_by_username}
                         </span>
+                        {book.reader_badge ? (
+                          <span className="reader-badge">{book.reader_badge}</span>
+                        ) : null}
                         <span className="stars" aria-label={`${book.rating} out of 5 stars`}>
                           {Array.from({ length: 5 }, (_, index) => (
                             <span
@@ -554,6 +719,23 @@ export function ReadingWallApp() {
                             </button>
                           </div>
                         </form>
+
+                        <div className="reaction-row">
+                          {reactionOptions.map((reaction) => (
+                            <button
+                              className="reaction-button"
+                              key={reaction.key}
+                              onClick={() =>
+                                void handleReaction(book, reaction.key as ReactionKey)
+                              }
+                              type="button"
+                            >
+                              <span className="reaction-icon">{reaction.icon}</span>
+                              <span>{reaction.label}</span>
+                              <strong>{book[reaction.key as ReactionKey]}</strong>
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -674,6 +856,25 @@ export function ReadingWallApp() {
                 </div>
 
                 <label>
+                  Reading badge
+                  <select
+                    value={composer.readerBadge}
+                    onChange={(event) =>
+                      setComposer((current) => ({
+                        ...current,
+                        readerBadge: event.target.value
+                      }))
+                    }
+                  >
+                    {readingBadges.map((badge) => (
+                      <option key={badge} value={badge}>
+                        {badge}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
                   Recommendation
                   <select
                     value={composer.recommendationStatus}
@@ -746,29 +947,6 @@ export function ReadingWallApp() {
                 Change Username
               </button>
             </div>
-            <div className="grade-rail-sort">
-              <button
-                className={`sort-button ${sortMode === "newest" ? "is-active" : ""}`}
-                onClick={() => setSortMode("newest")}
-                type="button"
-              >
-                Newest
-              </button>
-              <button
-                className={`sort-button ${sortMode === "highest" ? "is-active" : ""}`}
-                onClick={() => setSortMode("highest")}
-                type="button"
-              >
-                Highest
-              </button>
-              <button
-                className={`toggle-button ${onlyRecommended ? "is-active" : ""}`}
-                onClick={() => setOnlyRecommended((current) => !current)}
-                type="button"
-              >
-                Recommended
-              </button>
-            </div>
             <div className="grade-rail-tabs" role="tablist">
               {grades.map((grade) => (
                 <button
@@ -814,6 +992,17 @@ function formatTimestamp(timestamp: string) {
     hour: "numeric",
     minute: "2-digit"
   }).format(new Date(timestamp));
+}
+
+function isToday(timestamp: string) {
+  const value = new Date(timestamp);
+  const today = new Date();
+
+  return (
+    value.getFullYear() === today.getFullYear() &&
+    value.getMonth() === today.getMonth() &&
+    value.getDate() === today.getDate()
+  );
 }
 
 function containsRealNamePattern(value: string) {
