@@ -971,8 +971,8 @@ textarea:focus {
   }
 
   .inline-comments-shell {
-    margin-left: -92px;
-    width: calc(100% + 92px);
+    margin-left: 0;
+    width: 100%;
   }
 
   .story-header {
@@ -981,5 +981,14 @@ textarea:focus {
 
   .story-header h1 {
     font-size: 1.55rem;
+  }
+
+  .section-title {
+    align-items: flex-start;
+  }
+
+  .comment-item,
+  .chat-label textarea {
+    width: 100%;
   }
 }
