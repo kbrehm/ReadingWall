@@ -136,27 +136,6 @@ export function ReadingWallApp() {
     });
   }, [books, onlyRecommended, session, sortMode]);
 
-  const headerStats = useMemo(() => {
-    const readers = new Set(visibleBooks.map((book) => book.posted_by_username)).size;
-    const topRatedBook = [...visibleBooks].sort(
-      (left, right) =>
-        right.rating - left.rating || right.loved_it_count - left.loved_it_count
-    )[0];
-    const newCommentsToday = visibleBooks.reduce((count, book) => {
-      return (
-        count +
-        book.comments.filter((comment) => isToday(comment.created_at)).length
-      );
-    }, 0);
-
-    return {
-      booksPosted: visibleBooks.length,
-      readersThisWeek: readers,
-      topRatedBook: topRatedBook?.title ?? "No books yet",
-      newCommentsToday
-    };
-  }, [visibleBooks]);
-
   const featuredBooks = useMemo(() => {
     const topRated = [...visibleBooks].sort(
       (left, right) =>
@@ -521,24 +500,6 @@ export function ReadingWallApp() {
                   Share books, react to favorites, and discover what your class is
                   loving this summer.
                 </p>
-              </div>
-              <div className="favorite-badge">
-                <span>This Week&apos;s Favorite</span>
-                <strong>{headerStats.topRatedBook}</strong>
-              </div>
-              <div className="story-stats">
-                <div className="story-stat-card">
-                  <span className="story-stat-label">Books Posted</span>
-                  <strong>{headerStats.booksPosted}</strong>
-                </div>
-                <div className="story-stat-card">
-                  <span className="story-stat-label">Readers This Week</span>
-                  <strong>{headerStats.readersThisWeek}</strong>
-                </div>
-                <div className="story-stat-card">
-                  <span className="story-stat-label">New Comments Today</span>
-                  <strong>{headerStats.newCommentsToday}</strong>
-                </div>
               </div>
             </section>
 
@@ -934,19 +895,6 @@ export function ReadingWallApp() {
           </div>
 
           <aside className="surface-card grade-rail" aria-label="Grade rooms">
-            <div className="grade-rail-head">
-              <div className="grade-rail-label">Grades</div>
-              <div className="toolbar-copy grade-count">
-                {visibleBooks.length} book{visibleBooks.length === 1 ? "" : "s"}
-              </div>
-              <button
-                className="ghost-button grade-rail-change"
-                onClick={resetEntry}
-                type="button"
-              >
-                Change Username
-              </button>
-            </div>
             <div className="grade-rail-tabs" role="tablist">
               {grades.map((grade) => (
                 <button
@@ -958,7 +906,6 @@ export function ReadingWallApp() {
                   type="button"
                 >
                   <span className="grade-rail-short">{grade.shortLabel}</span>
-                  <span className="grade-rail-text">{grade.label}</span>
                 </button>
               ))}
             </div>
@@ -992,17 +939,6 @@ function formatTimestamp(timestamp: string) {
     hour: "numeric",
     minute: "2-digit"
   }).format(new Date(timestamp));
-}
-
-function isToday(timestamp: string) {
-  const value = new Date(timestamp);
-  const today = new Date();
-
-  return (
-    value.getFullYear() === today.getFullYear() &&
-    value.getMonth() === today.getMonth() &&
-    value.getDate() === today.getDate()
-  );
 }
 
 function containsRealNamePattern(value: string) {
