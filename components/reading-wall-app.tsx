@@ -430,49 +430,23 @@ export function ReadingWallApp() {
   return (
     <main className="page-shell">
       <section className="room-screen">
-        <div className="room-layout">
-          <section className="surface-card room-header">
-            <div>
-              <div className="eyebrow">Reading Wall</div>
-              <h1>{gradeLabel(session.grade)} Book Room</h1>
-              <p>
-                Share what you&apos;re reading, recommend books, and talk about
-                them.
-              </p>
-              <div className="room-subline">
-                <span className="chip">
-                  In room as <strong>{session.username}</strong>
-                </span>
-                <span className="chip">Supabase-backed posts and comments</span>
-              </div>
-            </div>
-            <button className="secondary-button" onClick={resetEntry} type="button">
-              Change Username
-            </button>
-          </section>
-
-          <section className="surface-card">
-            <div className="grade-tabs" role="tablist" aria-label="Grade rooms">
-              {grades.map((grade) => (
+        <div className="room-layout room-layout-simplified">
+          <div className="room-main">
+            <section className="surface-card room-toolbar">
+              <div className="room-toolbar-top">
+                <div className="room-mini-title">
+                  <span className="eyebrow">{gradeLabel(session.grade)}</span>
+                  <span className="toolbar-copy">
+                    {visibleBooks.length} book{visibleBooks.length === 1 ? "" : "s"}
+                  </span>
+                </div>
                 <button
-                  key={grade.id}
-                  className={`tab-button ${
-                    session.grade === grade.id ? "is-active" : ""
-                  }`}
-                  onClick={() => changeGrade(grade.id)}
+                  className="ghost-button"
+                  onClick={resetEntry}
                   type="button"
                 >
-                  {grade.label}
+                  Change Username
                 </button>
-              ))}
-            </div>
-          </section>
-
-          <section className="surface-card">
-            <div className="toolbar-row">
-              <div className="toolbar-copy">
-                {visibleBooks.length} book{visibleBooks.length === 1 ? "" : "s"} in
-                this room
               </div>
               <div className="book-actions">
                 <button
@@ -497,16 +471,15 @@ export function ReadingWallApp() {
                   Recommended Only
                 </button>
               </div>
-            </div>
-          </section>
-
-          {booksError ? (
-            <section className="surface-card">
-              <p className="error-text">Supabase error: {booksError}</p>
             </section>
-          ) : null}
 
-          <section className="feed">
+            {booksError ? (
+              <section className="surface-card">
+                <p className="error-text">Supabase error: {booksError}</p>
+              </section>
+            ) : null}
+
+            <section className="feed">
             {loadingBooks ? (
               <div className="surface-card empty-state">
                 <h3>Loading books...</h3>
@@ -514,9 +487,9 @@ export function ReadingWallApp() {
               </div>
             ) : visibleBooks.length ? (
               visibleBooks.map((book) => (
-                <article className="book-card" key={book.id}>
-                  <div className="book-top">
-                    <div className="cover-frame">
+                <article className="book-card compact-book-card" key={book.id}>
+                  <div className="book-top compact-book-top">
+                    <div className="cover-frame compact-cover-frame">
                       {book.cover_image_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={book.cover_image_url} alt={`Cover for ${book.title}`} />
@@ -528,8 +501,8 @@ export function ReadingWallApp() {
                       )}
                     </div>
 
-                    <div>
-                      <div className="book-heading">
+                    <div className="book-content">
+                      <div className="book-heading compact-book-heading">
                         <div className="book-title-wrap">
                           <h2>{book.title}</h2>
                           <p className="book-meta">
@@ -545,9 +518,9 @@ export function ReadingWallApp() {
                         </span>
                       </div>
 
-                      <div className="rating-row">
+                      <div className="rating-row compact-rating-row">
                         <span className="posted-by">
-                          Posted by: {book.posted_by_username}
+                          {book.posted_by_username}
                         </span>
                         <span className="stars" aria-label={`${book.rating} out of 5 stars`}>
                           {Array.from({ length: 5 }, (_, index) => (
@@ -562,42 +535,13 @@ export function ReadingWallApp() {
                         <span className="muted">{book.rating}/5</span>
                       </div>
 
-                      <div className="review-box">
+                      <div className="review-box compact-review-box">
                         <p>{book.review_text}</p>
                       </div>
 
-                      <div className="book-actions top-gap">
-                        <button
-                          className="secondary-button"
-                          onClick={() =>
-                            setOpenThreads((current) => ({
-                              ...current,
-                              [book.id]: true
-                            }))
-                          }
-                          type="button"
-                        >
-                          Join Discussion
-                        </button>
-                        <button
-                          className="ghost-button"
-                          onClick={() =>
-                            setOpenThreads((current) => ({
-                              ...current,
-                              [book.id]: true
-                            }))
-                          }
-                          type="button"
-                        >
-                          Add Update
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="comments-shell">
+                      <div className="comments-shell inline-comments-shell">
                     <div className="section-title">
-                      <h3>Book Discussion</h3>
+                      <h3>Discussion</h3>
                       <span className="muted">
                         {book.comments.length} comment{book.comments.length === 1 ? "" : "s"}
                       </span>
@@ -619,12 +563,38 @@ export function ReadingWallApp() {
                       ) : (
                         <div className="comment-item">
                           <p className="muted">
-                            No comments yet. Be the first to share a thought
-                            about this book.
+                            No comments yet. Be the first to share a thought.
                           </p>
                         </div>
                       )}
                     </div>
+
+                        <div className="book-actions compact-actions">
+                          <button
+                            className="secondary-button"
+                            onClick={() =>
+                              setOpenThreads((current) => ({
+                                ...current,
+                                [book.id]: true
+                              }))
+                            }
+                            type="button"
+                          >
+                            Join Discussion
+                          </button>
+                          <button
+                            className="ghost-button"
+                            onClick={() =>
+                              setOpenThreads((current) => ({
+                                ...current,
+                                [book.id]: true
+                              }))
+                            }
+                            type="button"
+                          >
+                            Add Update
+                          </button>
+                        </div>
 
                     {openThreads[book.id] ? (
                       <form
@@ -667,6 +637,8 @@ export function ReadingWallApp() {
                         </div>
                       </form>
                     ) : null}
+                      </div>
+                    </div>
                   </div>
                 </article>
               ))
@@ -676,15 +648,12 @@ export function ReadingWallApp() {
                 <p className="muted">Start the room by adding the first summer book below.</p>
               </div>
             )}
-          </section>
+            </section>
 
-          <section className="composer-card">
+            <section className="composer-card">
             <div className="composer-header">
               <div>
                 <h2>Add a Book</h2>
-                <p className="muted">
-                  Upload a cover to the <code>book-covers</code> bucket or paste an image URL.
-                </p>
               </div>
               <button
                 className={`toggle-button ${composerOpen ? "is-active" : ""}`}
@@ -768,9 +737,6 @@ export function ReadingWallApp() {
                   <label>
                     Upload cover image
                     <input accept="image/*" onChange={handleCoverUpload} type="file" />
-                    <span className="field-help">
-                      Uploads directly to the public <code>book-covers</code> bucket.
-                    </span>
                   </label>
 
                   <label>
@@ -845,7 +811,27 @@ export function ReadingWallApp() {
                 </p>
               </form>
             ) : null}
-          </section>
+            </section>
+          </div>
+
+          <aside className="surface-card grade-rail" aria-label="Grade rooms">
+            <div className="grade-rail-label">Grades</div>
+            <div className="grade-rail-tabs" role="tablist">
+              {grades.map((grade) => (
+                <button
+                  key={grade.id}
+                  className={`tab-button grade-rail-button ${
+                    session.grade === grade.id ? "is-active" : ""
+                  }`}
+                  onClick={() => changeGrade(grade.id)}
+                  type="button"
+                >
+                  <span className="grade-rail-short">{grade.shortLabel}</span>
+                  <span className="grade-rail-text">{grade.label}</span>
+                </button>
+              ))}
+            </div>
+          </aside>
         </div>
       </section>
     </main>

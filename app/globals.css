@@ -560,7 +560,168 @@ textarea:focus {
   color: #8b3c24;
 }
 
+.room-layout-simplified {
+  grid-template-columns: minmax(0, 1fr) 132px;
+  align-items: start;
+}
+
+.room-main {
+  display: grid;
+  gap: 16px;
+}
+
+.room-toolbar {
+  padding: 18px 20px;
+}
+
+.room-toolbar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.room-mini-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.room-mini-title .eyebrow {
+  margin-bottom: 0;
+}
+
+.grade-rail {
+  position: sticky;
+  top: 24px;
+  padding: 16px 12px;
+}
+
+.grade-rail-label {
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.grade-rail-tabs {
+  display: grid;
+  gap: 8px;
+}
+
+.grade-rail-button {
+  width: 100%;
+  padding: 12px 10px;
+  border-radius: 18px;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+
+.grade-rail-short {
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.grade-rail-text {
+  font-size: 0.76rem;
+  line-height: 1.15;
+}
+
+.compact-book-card {
+  padding: 16px;
+}
+
+.compact-book-top {
+  gap: 14px;
+  grid-template-columns: 92px minmax(0, 1fr);
+  align-items: start;
+}
+
+.compact-cover-frame {
+  width: 92px;
+  height: 128px;
+  border-radius: 16px;
+}
+
+.book-content {
+  min-width: 0;
+}
+
+.compact-book-heading {
+  align-items: start;
+  gap: 10px;
+}
+
+.compact-book-heading .status-badge {
+  min-width: 0;
+  padding: 7px 10px;
+}
+
+.book-title-wrap h2 {
+  font-size: 1.3rem;
+}
+
+.compact-rating-row {
+  margin: 10px 0 8px;
+  gap: 10px;
+}
+
+.compact-rating-row .posted-by {
+  padding: 5px 10px;
+  font-size: 0.86rem;
+}
+
+.compact-rating-row .stars {
+  font-size: 1.05rem;
+}
+
+.compact-review-box,
+.inline-comments-shell {
+  margin-top: 10px;
+}
+
+.compact-review-box {
+  padding: 12px 14px;
+}
+
+.inline-comments-shell {
+  padding: 12px 14px;
+}
+
+.compact-actions {
+  margin-top: 12px;
+}
+
+.compact-actions .secondary-button,
+.compact-actions .ghost-button {
+  padding: 8px 12px;
+}
+
 @media (max-width: 900px) {
+  .room-layout-simplified {
+    grid-template-columns: 1fr;
+  }
+
+  .grade-rail {
+    position: static;
+    order: -1;
+    padding: 14px;
+  }
+
+  .grade-rail-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .grade-rail-button {
+    gap: 4px;
+  }
+
   .entry-card {
     grid-template-columns: 1fr;
   }
@@ -599,5 +760,23 @@ textarea:focus {
 
   .composer-card {
     position: static;
+  }
+
+  .room-toolbar-top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .grade-rail-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .compact-book-top {
+    grid-template-columns: 78px minmax(0, 1fr);
+  }
+
+  .compact-cover-frame {
+    width: 78px;
+    height: 108px;
   }
 }
